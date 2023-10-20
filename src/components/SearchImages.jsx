@@ -9,12 +9,13 @@ export const searchImages = async (searchTerm, setState, pageNumber, replace = t
         key: '36787252-5c3b11e3b9a6e8386f9bae3e3', 
         image_type: 'photo',
         orientation: 'horizontal',
-        per_page: 20
+        per_page: 12
       }
     });
     const images = response.data.hits;
     if (replace) {
       setState({ images }); 
+      setState({ totatPages:  Math.ceil(response.data.hits / 12)})
     } else {
       setState(prevState => ({ images: prevState.images.concat(images) })); 
     }

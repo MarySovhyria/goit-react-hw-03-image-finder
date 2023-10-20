@@ -1,29 +1,20 @@
-import React, { Component } from "react";
-import { Vortex } from "react-loader-spinner";
-import PropTypes from 'prop-types';
+import { ColorRing } from 'react-loader-spinner';
+import { LodeWrapper } from './styledComponents/Loader.styled';
 
-export class Load extends Component {
-  render() {
-    const { onLoader } = this.props;
-    const { loadingMore } = this.props; 
-  
-    return (
-      <div>
-        {onLoader && onLoader(
-          loadingMore ? ( 
-            <Vortex
-              color="#00BFFF"
-              height={100}
-              width={100}
-            />
-          ) : null
-        )}
-      </div>
-    );
-  }
-}  
-
-Load.propTypes = {
-  onLoader: PropTypes.func.isRequired,
-  loadingMore: PropTypes.bool.isRequired
+const Loader = () => {
+  return (
+    <LodeWrapper>
+      <ColorRing
+        visible={true}
+        height="80"
+        width="80"
+        ariaLabel="blocks-loading"
+        wrapperStyle={{}}
+        wrapperClass="blocks-wrapper"
+        colors={['#f8d703', '#cc06f4', '#f8d703', '#06d0f3', '#f8d703']}
+      />
+    </LodeWrapper>
+  );
 };
+
+export default Loader;

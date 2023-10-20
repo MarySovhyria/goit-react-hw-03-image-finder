@@ -1,99 +1,109 @@
-import React, { Component } from 'react';
-import { Searcher } from './SearchBar';
-import { ImageGallery } from './ImageGallery';
-import { searchImages} from './SearchImages';
-import { ButtonLoadMore } from './Button';
-import { Load } from './Loader';
-import { Modal } from './Modal';
-export class App extends Component {
+import { Component } from 'react';
+import * as API from './services/PixabayApi';
+import SearchBar from './SearchBar';
+import ImageGallery from './ImageGallery';
+import Loader from './Loader';
+import Button from './Button';
+import { ToastContainer, toast, Slide } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+class App extends Component {
+  // Установка начального состояния
   state = {
-    images: [],
-    loading: true,
-    error: null,
-    imageName: '',
-    pageNumber: 1,
-    loadingMore: false,
-    showModal: false,
-    selectedImage: null,
+    searchName: '', // Хранит запрос для поиска
+    images: [], // Хранит загруженные изображения
+    currentPage: 1, // Хранит текущий номер страницы
+    error: null, // Хранит сообщение об ошибке
+    isLoading: false, // Индикатор загрузки изображений
+    totalPages: 0, // Хранит общее количество страниц
   };
 
-  async componentDidMount() {
-    this.setState({ loading: false });
+  // Метод жизненного цикла: вызывается при обновлении компонента
+  componentDidUpdate(_, prevState) {
+    // Проверяем, изменился ли запрос или номер страницы
+    if (
+      prevState.searchName !== this.state.searchName ||
+      prevState.currentPage !== this.state.currentPage
+    ) {
+      this.addImages(); // Получаем и добавляем изображения в состояние
+    }
   }
 
-  handleChangeImageName = e => {
-    e.preventDefault();
-    const { value } = e.target;
-    this.setState({ imageName: value });
-  };
-
-  onSubmit = async e => {
-    e.preventDefault();
-    const { imageName, pageNumber } = this.state;
-
-    console.log(imageName);
-
-    await searchImages(imageName, this.setState.bind(this), pageNumber, true);
-  };
-
-  LoadMorePics = async e => {
-    e.preventDefault();
-    const { imageName, pageNumber } = this.state;
-    const nextPageNumber = pageNumber + 1;
-  
-    this.setState({ loadingMore: true });
-  
-    await searchImages(imageName, this.setState.bind(this), nextPageNumber, false);
-  
+  // Метод для загрузки дополнительных изображений путем увеличения номера текущей страницы
+  loadMore = () => {
     this.setState(prevState => ({
-      loadingMore: false,
-      pageNumber: nextPageNumber
+      currentPage: prevState.currentPage + 1,
     }));
   };
-  
 
-  loader = spinner => {
-    const { loading, error } = this.state;
-
-    if (loading) {
-      return spinner;
-    }
-
-    if (error) {
-      return <div>Error: {error.message}</div>;
-    }
-
-    return null;
-  };
-  handleImageClick = image => {
-    this.setState({ selectedImage: image, showModal: true });
-    document.body.style.overflow = 'hidden';
+  // Метод для обработки отправки формы поиска
+  handleSubmit = query => {
+    this.setState({
+      searchName: query, // Устанавливаем введенный запрос в состояние
+      images: [], // Очищаем массив с изображениями
+      currentPage: 1, // Сбрасываем номер текущей страницы на первую
+    });
   };
 
-  handleModalClose = () => {
-    this.setState({ selectedImage: null, showModal: false });
-    document.body.style.overflow = 'auto';
+  // Метод для получения и добавления изображений в состояние
+  addImages = async () => {
+    const { searchName, currentPage } = this.state;
+    try {
+      this.setState({ isLoading: true }); // Устанавливаем флаг загрузки
+
+      // Получаем данные с помощью API запроса к Pixabay
+      const data = await API.getImages(searchName, currentPage);
+
+      if (data.hits.length === 0) {
+        // Если изображения не найдены, выводим сообщение
+        return toast.info('Sorry image not found...', {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+      }
+
+      // Нормализуем полученные изображения
+      const normalizedImages = API.normalizedImages(data.hits);
+
+      this.setState(state => ({
+        images: [...state.images, ...normalizedImages], // Добавляем новые изображения к существующим
+        isLoading: false, // Сбрасываем флаг загрузки
+        error: '', // Очищаем сообщение об ошибке
+        totalPages: Math.ceil(data.totalHits / 12), // Вычисляем общее количество страниц
+      }));
+    } catch (error) {
+      this.setState({ error: 'Something went wrong!' }); // Если произошла ошибка, выводим сообщение
+    } finally {
+      this.setState({ isLoading: false }); // В любом случае сбрасываем флаг загрузки
+    }
   };
 
   render() {
-    const { images, imageName, showModal, selectedImage } = this.state;
+    const { images, isLoading, currentPage, totalPages } = this.state;
+
     return (
       <div>
-        <Searcher
-          imageName={imageName}
-          onChangeImageName={this.handleChangeImageName}
-          onSubmit={this.onSubmit}
-        />
-
-        <ImageGallery images={images} onItemClick={this.handleImageClick} />
-
-        <ButtonLoadMore onLoadPics={this.LoadMorePics} />
-
-        <Load onLoader={this.loader} loadingMore={this.state.loadingMore} />
-        {showModal && (
-          <Modal image={selectedImage} onRequestClose={this.handleModalClose} />
+        <ToastContainer transition={Slide} />
+        <SearchBar onSubmit={this.handleSubmit} />
+        {images.length > 0 ? (
+          <ImageGallery images={images} />
+        ) : (
+          <p
+            style={{
+              padding: 100,
+              textAlign: 'center',
+              fontSize: 30,
+            }}
+          >
+            Image gallery is empty... 📷
+          </p>
+        )}
+        {isLoading && <Loader />}
+        {images.length > 0 && totalPages !== currentPage && !isLoading && (
+          <Button onClick={this.loadMore} /> // Кнопка для загрузки дополнительных изображений
         )}
       </div>
     );
   }
 }
+
+export default App;

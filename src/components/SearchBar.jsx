@@ -1,39 +1,54 @@
-import React, { Component } from "react";
-import { SearchbarStyled } from "./styledComponents/SearchBar.styled";
-import { SearchFormStyled } from "./styledComponents/SearchBar.styled";
-import { SearchFormButtonStyled } from "./styledComponents/SearchBar.styled";
-import { SearchFormButtonLabel } from "./styledComponents/SearchBar.styled";
-import { SearchForInput } from "./styledComponents/SearchBar.styled";
+import { Component } from 'react';
 import PropTypes from 'prop-types';
+import {
+  SearchForm,
+  SearchInput,
+  SearchButton,
+  SearchSpan,
+} from './styledComponents/SearchBar.styled';
 
-export class Searcher extends Component {
+class SearchBar extends Component {
+  state = {
+    searchName: '', // Хранит значение введенного поискового запроса
+    inputValue: '',
+  };
+
+  handleChange = event => {
+    this.setState({ inputValue: event.target.value });
+  };
+
+  handleSubmit = event => {
+    event.preventDefault(); // Предотвращаем стандартное поведение формы
+    const searchQuery = event.target.elements.searchName.value.trim(); // Получаем введенный поисковый запрос и удаляем пробелы
+    this.props.onSubmit(searchQuery); // Передаем введенный поисковый запрос родительскому компоненту
+    event.target.reset(); // Сбрасываем значение в поле ввода после отправки формы
+  };
+
   render() {
-    const { onChangeImageName, onSubmit, imageName } = this.props;
-
     return (
-      <SearchbarStyled className="searchbar">
-        <SearchFormStyled className="form" onSubmit={onSubmit}>
-          <SearchFormButtonStyled type="submit" className="button">
-            <SearchFormButtonLabel className="button-label">Search</SearchFormButtonLabel>
-          </SearchFormButtonStyled>
-
-          <SearchForInput
-            className="input"
+      <header>
+        <SearchForm onSubmit={this.handleSubmit}>
+          <a href="https://pixabay.com/" target="_blank" rel="noreferrer">
+          </a>
+          <SearchButton>
+            {/* <BsSearch /> */}
+            <SearchSpan>Search</SearchSpan>
+          </SearchButton>
+          <SearchInput
+            name="searchName"
             type="text"
-            autoComplete="off"
-            autoFocus
-            placeholder="Search images and photos"
-            value={imageName} 
-            onChange={onChangeImageName} 
+            id="search"
+            value={this.state.inputValue}
+            onChange={this.handleChange}
           />
-        </SearchFormStyled>
-      </SearchbarStyled>
+        </SearchForm>
+      </header>
     );
   }
 }
 
-Searcher.propTypes = {
-  onChangeImageName: PropTypes.func.isRequired,
+SearchBar.propTypes = {
   onSubmit: PropTypes.func.isRequired,
-  imageName: PropTypes.string.isRequired, 
 };
+
+export default SearchBar;
