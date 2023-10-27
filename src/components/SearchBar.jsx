@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   SearchForm,
@@ -7,45 +7,38 @@ import {
   SearchSpan,
 } from './styledComponents/SearchBar.styled';
 
-class SearchBar extends Component {
-  state = {
-    searchName: '', // Хранит значение введенного поискового запроса
-    inputValue: '',
-  };
+const  SearchBar = ({ onSubmit }) => {
+  const [inputValue, setInputValue] = useState('');
 
-  handleChange = event => {
-    this.setState({ inputValue: event.target.value });
-  };
+  const handleChange = event => {
+    setInputValue(event.target.value)
+  }
 
-  handleSubmit = event => {
-    event.preventDefault(); // Предотвращаем стандартное поведение формы
-    const searchQuery = event.target.elements.searchName.value.trim(); // Получаем введенный поисковый запрос и удаляем пробелы
-    this.props.onSubmit(searchQuery); // Передаем введенный поисковый запрос родительскому компоненту
-    event.target.reset(); // Сбрасываем значение в поле ввода после отправки формы
-  };
-
-  render() {
+const handleSubmit = event => {
+  event.preventDefault(); 
+  const searchQuery = event.target.elements.searchName.value.trim(); 
+  onSubmit(searchQuery);
+  event.target.reset();
+}
     return (
       <header>
-        <SearchForm onSubmit={this.handleSubmit}>
+        <SearchForm onSubmit={handleSubmit}>
           <a href="https://pixabay.com/" target="_blank" rel="noreferrer">
           </a>
           <SearchButton>
-            {/* <BsSearch /> */}
             <SearchSpan>Search</SearchSpan>
           </SearchButton>
           <SearchInput
             name="searchName"
             type="text"
             id="search"
-            value={this.state.inputValue}
-            onChange={this.handleChange}
+            value={inputValue}
+            onChange={handleChange}
           />
         </SearchForm>
       </header>
     );
   }
-}
 
 SearchBar.propTypes = {
   onSubmit: PropTypes.func.isRequired,

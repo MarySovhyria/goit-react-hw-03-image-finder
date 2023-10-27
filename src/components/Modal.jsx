@@ -1,52 +1,46 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { Overlay, ModalWindow } from './styledComponents/Modal.styled';
 
-// Объект модального окна в DOM-дереве
+
 const modalRoot = document.querySelector('#modal-root');
 
-// Классовый компонент Modal
-class Modal extends Component {
-  // Метод жизненного цикла: вызывается после монтирования компонента
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown); // Добавляем обработчик события нажатия клавиши
-    document.body.style.overflow = 'hidden';
-  }
 
-  // Метод жизненного цикла: вызывается перед размонтированием компонента
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown); // Удаляем обработчик события нажатия клавиши
-    document.body.style.overflow = 'visible';
-  }
+const Modal = ({onClose, largeImageURL, tags}) => {
+ 
+ 
 
-  // Обработчик события нажатия клавиши
-  handleKeyDown = event => {
-    if (event.code === 'Escape') {
-      this.props.onClose(); // Закрываем модальное окно при нажатии клавиши Escape
-    }
+  useEffect(() => {
+     const handleKeyDown = event => {
+      if (event.code === 'Escape') {
+        onClose(); 
+      }
   };
+    document.body.style.overflow = 'hidden'; 
+    window.addEventListener('keydown', handleKeyDown);
 
-  // Обработчик клика по фону модального окна
-  handleBackdropClick = event => {
+    return () => {
+      document.body.style.overflow = 'visible';
+      window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [onClose]);
+  
+  const handleBackdropClick = event => {
     if (event.currentTarget === event.target) {
-      this.props.onClose(); // Закрываем модальное окно при клике на фон
+      onClose(); 
     }
   };
-
-  render() {
-    const { largeImageURL, tags } = this.props; // Получаем значения пропсов
 
     return createPortal(
-      <Overlay onClick={this.handleBackdropClick}>
+      <Overlay onClick={handleBackdropClick}>
         <ModalWindow>
           <img src={largeImageURL} alt={tags} />
         </ModalWindow>
       </Overlay>,
-      modalRoot // Рендерим модальное окно в объект modalRoot в DOM-дереве
+      modalRoot 
     );
   }
-}
 
 Modal.propTypes = {
   largeImageURL: PropTypes.string.isRequired,

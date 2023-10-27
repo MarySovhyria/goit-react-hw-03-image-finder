@@ -14,11 +14,11 @@ export const searchImages = async (searchTerm, setState, pageNumber, replace = t
     });
     const images = response.data.hits;
     if (replace) {
-      setState({ images }); 
-      setState({ totatPages:  Math.ceil(response.data.hits / 12)})
+      setState(prevState => ({ ...prevState, images, totalPages: Math.ceil(images.length / 12) }));
     } else {
-      setState(prevState => ({ images: prevState.images.concat(images) })); 
+      setState(prevState => ({ ...prevState, images: [...prevState.images, ...images] }));
     }
+    
     return images;
   } catch (error) {
     console.error(error);
